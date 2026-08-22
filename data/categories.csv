@@ -1,0 +1,10 @@
+category_name,description,is_default
+Food & Dining,Groceries; restaurants; coffee,True
+Transportation,Gas; public transit; ride-sharing,True
+Utilities,Electricity; water; internet,True
+Entertainment,Movies; games; hobbies,True
+Healthcare,Medical expenses; prescriptions,True
+Shopping,Clothing; household items,True
+Salary,Regular income from employment,True
+Savings,Money transferred to savings,True
+Other,Miscellaneous transactions,True
