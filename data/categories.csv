@@ -1,3 +1,10 @@
+category,type
+Food,Expense
+Rent,Expense
+Utilities,Expense
+Entertainment,Expense
+Salary,Income
+Other Income,Income
 category_name,description,is_default
 Food & Dining,Groceries; restaurants; coffee,True
 Transportation,Gas; public transit; ride-sharing,True

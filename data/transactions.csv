@@ -1,1 +1,1 @@
-id,date,description,category,type,amount,payment_method,tags
+date,description,category,amount,typeid,date,description,category,type,amount,payment_method,tags

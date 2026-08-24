@@ -57,12 +57,10 @@ venv.bak/
 .DS_Store
 
 # Project-specific
-data/*.csv
-!data/.gitkeep
 debug.log
-*.png
-*.pdf
-!docs/*.pdf
 .env
+
+# Keep starter CSV data and documentation assets tracked.
+# Ignore generated images only.
 images/*.png
 !images/.gitkeep
