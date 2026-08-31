@@ -27,6 +27,7 @@ def add_transaction():
             break
         print("Invalid selection. Choose 1, 2, or 0.")
 
+
     # 2. Category
     print(f"\nSelect {t_type} Category:")
     for idx, cat in enumerate(categories, start=1):
@@ -93,9 +94,3 @@ def add_transaction():
         conn.commit()
         
     print("\nTransaction recorded successfully.")
-
-
-def enter_transaction():
-    """Collect one transaction from a user placeholder."""
-    # Future work: collect transaction details through the CLI.
-    pass
