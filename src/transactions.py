@@ -97,6 +97,7 @@ def add_transaction():
 =======
 >>>>>>> main
 
+
     # 2. Category
     print(f"\nSelect {t_type} Category:")
     for idx, cat in enumerate(categories, start=1):
