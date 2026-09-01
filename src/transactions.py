@@ -30,7 +30,6 @@ def add_transaction():
             categories = expense_categories # type: ignore
             break
         print("Invalid selection. Choose 1, 2, or 0.")
-#<<<<<<< transactionreporting
 
     # 2. Category
     print(f"\nSelect {t_type} Category:")
@@ -98,10 +97,7 @@ def add_transaction():
         conn.commit()
         
     print("\nTransaction recorded successfully.")
-#=======
-#>>>>>>> main
-
-
+  
     # 2. Category
     print(f"\nSelect {t_type} Category:")
     for idx, cat in enumerate(categories, start=1):
