@@ -7,6 +7,8 @@
 # Outputs: Transaction records.
 # Honor Code: [Add the team's honor code statement here.]
 
+# Need to add in other parts of code.
+
 # Fixed Categories for Income and Expense Transactions
 income_categories = ["Salary", "Bonus", "Freelance", "Investment", "Other"]
 expense_categories = ["Food", "Rent", "Utilities", "Entertainment", "Transportation", 
