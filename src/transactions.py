@@ -7,6 +7,10 @@
 # Outputs: Transaction records.
 # Honor Code: [Add the team's honor code statement here.]
 
+# Fixed Categories for Income and Expense Transactions
+income_categories = ["Salary", "Bonus", "Freelance", "Investment", "Other"]
+expense_categories = ["Food", "Rent", "Utilities", "Entertainment", "Transportation", 
+                      "Healthcare", "Insurance", "Other"]
 
 def add_transaction():
     """Prompts and adds new entry to database."""
@@ -26,7 +30,7 @@ def add_transaction():
             categories = expense_categories # type: ignore
             break
         print("Invalid selection. Choose 1, 2, or 0.")
-<<<<<<< transactionreporting
+#<<<<<<< transactionreporting
 
     # 2. Category
     print(f"\nSelect {t_type} Category:")
@@ -94,8 +98,8 @@ def add_transaction():
         conn.commit()
         
     print("\nTransaction recorded successfully.")
-=======
->>>>>>> main
+#=======
+#>>>>>>> main
 
 
     # 2. Category
