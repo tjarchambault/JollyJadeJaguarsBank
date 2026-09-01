@@ -8,9 +8,30 @@
 # Honor Code: [Add the team's honor code statement here.]
 
 # Fixed Categories for Income and Expense Transactions
+import os
+import sys
+import pandas as pd
+import sqlite3
+from datetime import datetime
+
+# File setup
+DB_FILE = "transactions.db"
+
+# Fixed Categories
 income_categories = ["Salary", "Bonus", "Freelance", "Investment", "Other"]
 expense_categories = ["Food", "Rent", "Utilities", "Entertainment", "Transportation", 
                       "Healthcare", "Insurance", "Other"]
+
+# Fixed Categories for Income and Expense Transactions
+income_categories = ["Salary", "Bonus", "Freelance", "Investment", "Other"]
+expense_categories = ["Food", "Rent", "Utilities", "Entertainment", "Transportation", 
+                      "Healthcare", "Insurance", "Other"]
+
+def view_transactions():
+    """Lists all transactions."""
+    print("\n--- All Transactions ---")
+    df = load_transactions() # type: ignore
+    print_table(df) # type: ignore
 
 def add_transaction():
     """Prompts and adds new entry to database."""
@@ -164,3 +185,50 @@ def add_transaction():
         conn.commit()
         
     print("\nTransaction recorded successfully.")
+
+def main():
+    """Run the Personal Finance Tracker application."""
+    """Main loop."""
+    """More to come in the transaction space"""
+    init_db() # type: ignore
+
+    while True:
+        try:
+            print("\n" + "=" * 40)
+            print("        PERSONAL FINANCE TRACKER       ")
+            print("=" * 40)
+            print("1. Add Transaction")
+            print("2. View Transactions")
+            print("3. Delete Transaction")
+            print("4. Calculate Totals")
+            print("5. Quit")
+
+            choice = input("\nEnter selection (1-5): ").strip()
+
+            if choice == "1":
+                add_transaction()
+            elif choice == "2":
+                view_transactions()
+            elif choice == "3":
+                delete_transaction() # type: ignore
+            elif choice == "4":
+                calculate_totals() # type: ignore
+            elif choice == "5":
+                print("\nThank you for using Simple Finance Tracker.")
+                sys.exit(0)
+            else:
+                print("Invalid choice. Please select a number from 1 to 5.")
+
+        # Catches normal cancellation keystrokes
+        except (KeyboardInterrupt, EOFError):
+            print("\n\nAction cancelled. Returning to main menu...")
+            continue
+        # Hard catch for weird numpad/terminal escape sequences 
+        except Exception:
+            print("\n\nInvalid key detected. Returning to main menu...")
+            continue# Future work: connect the CLI and feature modules here.
+    pass
+
+
+if __name__ == "__main__":
+    main()
