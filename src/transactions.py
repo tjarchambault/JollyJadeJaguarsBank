@@ -30,7 +30,7 @@ def add_transaction():
             categories = expense_categories # type: ignore
             break
         print("Invalid selection. Choose 1, 2, or 0.")
-#<<<<<<< transactionreporting
+#<<<<<<< transactionreportin
 
     # 2. Category
     print(f"\nSelect {t_type} Category:")
