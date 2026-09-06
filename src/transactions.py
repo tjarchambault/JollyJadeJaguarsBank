@@ -27,6 +27,62 @@ income_categories = ["Salary", "Bonus", "Freelance", "Investment", "Other"]
 expense_categories = ["Food", "Rent", "Utilities", "Entertainment", "Transportation", 
                       "Healthcare", "Insurance", "Other"]
 
+#File initialization and loading
+def init_db():
+    """Ensures SQLite database exists with proper schema."""
+    with sqlite3.connect(DB_FILE) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS transactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT NOT NULL,
+                description TEXT,
+                category TEXT,
+                amount REAL NOT NULL,
+                type TEXT NOT NULL
+            )
+        ''')
+        conn.commit()
+
+def load_transactions():
+    """Reads data from SQLite into a pandas DataFrame."""
+    init_db()
+    try:
+        with sqlite3.connect(DB_FILE) as conn:
+            df = pd.read_sql_query("SELECT * FROM transactions", conn)
+            
+            # Ensure types align for Pandas formatting
+            if not df.empty:
+                df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0)
+                df["id"] = pd.to_numeric(df["id"], errors="coerce").fillna(0).astype(int)
+        return df
+    except Exception as e:
+        print(f"Error loading database: {e}")
+        return pd.DataFrame(columns=["id", "date", "description", "category", "amount", "type"])
+
+def print_table(df):
+    """Prints a view of transactions."""
+    if df.empty:
+        print("\nNo records found.")
+        return
+
+    df_sorted = df.sort_values(by="date", ascending=False)
+    print("\n" + "=" * 90)
+    print(f"{'ID':<5} | {'Date':<10} | {'Type':<8} | {'Category':<15} | {'Description':<25} | {'Amount':<10}")
+    print("-" * 90)
+
+    for _, row in df_sorted.iterrows():
+        desc = str(row['description']) if pd.notna(row['description']) else "N/A"
+        print(
+            f"{int(row['id']):<5} | "
+            f"{str(row['date']):<10} | "
+            f"{str(row['type']):<8} | "
+            f"{str(row['category']):<15} | "
+            f"{desc[:25]:<25} | "
+            f"${row['amount']:<9.2f}"
+        )
+    print("=" * 90)
+
 def view_transactions():
     """Lists all transactions."""
     print("\n--- All Transactions ---")
