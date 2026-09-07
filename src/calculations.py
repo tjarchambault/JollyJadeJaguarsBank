@@ -1,3 +1,4 @@
+```python
 """Calculate basic financial totals."""
 
 # Program: Personal Finance Tracker - calculations.py
@@ -5,22 +6,37 @@
 # Inputs: Transaction records.
 # Process: Group and total transaction amounts.
 # Outputs: Financial totals.
-# Honor Code: [Add the team's honor code statement here.]
+# Honor Code: On my honor, as an Aggie, I have neither given nor received unauthorized aid on this academic work.
 
 
 def total_income(transactions):
-    """Calculate total income placeholder."""
-    # Future work: total transactions marked as income.
-    pass
+    """Calculate the total amount of income transactions."""
+    if not transactions:
+        return 0.00
+
+    return sum(
+        float(transaction[4])
+        for transaction in transactions
+        if transaction[5].lower() == "income"
+    )
 
 
 def total_expenses(transactions):
-    """Calculate total expenses placeholder."""
-    # Future work: total transactions marked as expenses.
-    pass
+    """Calculate the total amount of expense transactions."""
+    if not transactions:
+        return 0.00
+
+    return sum(
+        float(transaction[4])
+        for transaction in transactions
+        if transaction[5].lower() == "expense"
+    )
 
 
 def net_savings(transactions):
-    """Calculate net savings placeholder."""
-    # Future work: subtract expenses from income.
-    pass
+    """Calculate net savings by subtracting expenses from income."""
+    income = total_income(transactions)
+    expenses = total_expenses(transactions)
+
+    return income - expenses
+```
