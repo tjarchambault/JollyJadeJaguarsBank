@@ -7,11 +7,17 @@
 # Outputs: Validation results or useful errors.
 # Honor Code: [Add the team's honor code statement here.]
 
+from datetime import datetime
 
 def validate_date(value):
     """Validate a date placeholder."""
+    try:
+        datetime.strptime(value, "%m/%d/%Y")
+        return True
+    except ValueError: 
+        return False
     # Future work: enforce the selected date format.
-    pass
+    
 
 
 def validate_amount(value):
