@@ -8,7 +8,6 @@
 # Honor Code: [Add the team's honor code statement here.]
 
 # Fixed Categories for Income and Expense Transactions
-import os
 import sys
 import pandas as pd
 import sqlite3
