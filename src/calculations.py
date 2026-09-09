@@ -39,4 +39,16 @@ def net_savings(transactions):
     expenses = total_expenses(transactions)
 
     return income - expenses
-```
+
+def find_largest_expense(transactions):
+    """Find the largest expense transaction."""
+    expenses = [
+        float(transaction[4])
+        for transaction in transactions
+        if transaction[5].lower() == "expense"
+    ]
+
+    if not expenses:
+        return 0.00
+
+    return max(expenses)
