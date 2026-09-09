@@ -33,7 +33,7 @@ def total_expenses(transactions):
     )
 
 
-def net_savings(transactions):
+def calculate_net_savings(transactions):
     """Calculate net savings by subtracting expenses from income."""
     income = total_income(transactions)
     expenses = total_expenses(transactions)
