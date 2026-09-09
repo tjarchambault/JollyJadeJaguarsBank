@@ -5,7 +5,8 @@
 # Inputs: User choices and data supplied through other modules.
 # Process: Import and call feature modules as they are implemented.
 # Outputs: The completed application experience.
-# Honor Code: [Add the team's honor code statement here.]
+# Honor Code: On my honor, as an Aggie, I have neither given nor received unauthorized aid on this
+#             academic work. 
 
 # these are the tools/libraries I need to import so I can use them
 import sys  # lets me quit the program with sys.exit
