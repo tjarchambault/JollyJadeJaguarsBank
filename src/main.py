@@ -1,12 +1,13 @@
-"""Coordinate the Personal Finance Tracker application."""
-
 # Program: Personal Finance Tracker - main.py
-# Purpose: Coordinate the application modules and overall program flow.
-# Inputs: User choices and data supplied through other modules.
-# Process: Import and call feature modules as they are implemented.
-# Outputs: The completed application experience.
-# Honor Code: On my honor, as an Aggie, I have neither given nor received unauthorized aid on this
-#             academic work. 
+# Purpose: Allow the user to add/view/delete financial transactions.
+# Inputs:  Income/Expense, category, amount, date.
+# Process: The user is guided step by step on entering a transaction. Functions serve
+#          as building blocks to acheive a final output
+# Outputs: A viewable table with all transactions, total savings/expenses, net income.
+# Honor Code: On my honor, as an Aggie, I have neither given nor received unauthorized aid
+#             on this academic work. 
+#           The Aggie Code of Honor functions as a symbol to all Aggies, promoting understanding
+#           and loyalty to truth and confidence in each other.
 
 # these are the tools/libraries I need to import so I can use them
 import sys  # lets me quit the program with sys.exit
