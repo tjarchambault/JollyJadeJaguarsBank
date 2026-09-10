@@ -22,17 +22,30 @@ def validate_date(value):
 
 def validate_amount(value):
     """Validate an amount placeholder."""
+    try:
+        amount = float(value)
+        if amount < 0:
+            return False
+        return True
+    except ValueError:
+        return False
     # Future work: check that the amount is numeric and appropriate.
-    pass
+
 
 
 def validate_transaction_type(value):
     """Validate a transaction type placeholder."""
+    if value in ["income", "expense"]:
+        return True
+    return False
     # Future work: allow only income or expense.
-    pass
+    
 
 
 def validate_category(value, categories):
     """Validate a category placeholder."""
+    if value in categories:
+        return True
+    return False
     # Future work: check that the category is available.
-    pass
+    
