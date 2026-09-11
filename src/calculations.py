@@ -40,3 +40,6 @@ def net_savings(transactions):
 
     return income - expenses
 ```
+def count_transactions(transactions):
+    """Count the number of transactions."""
+    return len(transactions)
