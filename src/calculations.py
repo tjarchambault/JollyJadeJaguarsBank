@@ -40,3 +40,15 @@ def net_savings(transactions):
 
     return income - expenses
 ```
+def calculate_category_total(transactions, category):
+    """Calculate total expenses for a selected category."""
+    total = 0.00
+
+    for transaction in transactions:
+        if (
+            transaction[5].lower() == "expense"
+            and transaction[3].lower() == category.lower()
+        ):
+            total += float(transaction[4])
+
+    return total
