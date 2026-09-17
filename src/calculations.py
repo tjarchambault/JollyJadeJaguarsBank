@@ -9,7 +9,7 @@
 # Honor Code: On my honor, as an Aggie, I have neither given nor received unauthorized aid on this academic work.
 
 
-def total_income(transactions):
+def calculate_total_income(transactions):
     """Calculate the total amount of income transactions."""
     if not transactions:
         return 0.00
@@ -21,7 +21,7 @@ def total_income(transactions):
     )
 
 
-def total_expenses(transactions):
+def calculate_total_expenses(transactions):
     """Calculate the total amount of expense transactions."""
     if not transactions:
         return 0.00
