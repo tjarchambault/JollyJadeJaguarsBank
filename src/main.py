@@ -156,9 +156,9 @@ def print_table(df):
     df_sorted = df.sort_values(by="date", ascending=False)
 
     table = Table(
-        title="[bold black]Transactions[/bold black]",
+        title="[black]Transactions[/black]",
         box=box.ROUNDED,
-        header_style="bold black"
+        header_style="black"
     )
 
     # each column gets a style, no_wrap prevents values breaking onto a new line
@@ -212,7 +212,7 @@ def add_transaction():
             "[black]2.[/black] Expense\n"
             "\n"
             "[black]0.[/black] Cancel",
-            title="[bold black]Select Transaction Type[/bold black]",
+            title="[black]Select Transaction Type[/black]",
             border_style="black",
             box=box.ROUNDED
         ))
@@ -233,15 +233,15 @@ def add_transaction():
     # 2. Category
     cat_table = Table(box=box.SIMPLE, show_header=False)
     cat_table.add_column("Num",      style="black", justify="right")
-    cat_table.add_column("Category", style="green" if t_type == "Income" else "red")
+    cat_table.add_column("Category", style="black")
 
     for idx, cat in enumerate(categories, start=1):
-        cat_table.add_row(str(idx), cat)
+        cat_table.add_row(f"{idx}.", cat)
 
     console.print(Panel(
         cat_table,
-        title=f"[bold black]Select {t_type} Category[/bold black]",
-        border_style="green" if t_type == "Income" else "red",
+        title=f"[black]Select {t_type} Category[/black]",
+        border_style="black",
         box=box.ROUNDED
     ))
 
@@ -307,8 +307,8 @@ def add_transaction():
             f"[black]Desc     :[/black] [black]{description}[/black]\n"
             f"[black]Amount   :[/black] [{'green' if t_type == 'Income' else 'red'}]${amount:.2f}[/{'green' if t_type == 'Income' else 'red'}]\n"
             f"[black]Date     :[/black] [black]{t_date}[/black]",
-            title="[bold green]Saved[/bold green]",
-            border_style="green",
+            title="[black]Saved[/black]",
+            border_style="black",
             box=box.ROUNDED
         ))
     else:
@@ -382,7 +382,7 @@ def calculate_totals():
         f"[black]Total Income   :[/black]   [green]${income:.2f}[/green]\n"
         f"[black]Total Expenses :[/black]   [red]${expenses:.2f}[/red]\n"
         f"[black]Net Savings    :[/black]   [{net_color}]{net_str}[/{net_color}]",
-        title="[bold black]Financial Summary[/bold black]",
+        title="[black]Financial Summary[/black]",
         border_style="black",
         box=box.ROUNDED
     ))
@@ -423,28 +423,23 @@ def report_savings_by_category():
     # pull total expenses as a single number to subtract from income
     # we dont break expenses down by category here since savings is about
     # how much income is left after ALL expenses are accounted for
-    total_expenses_amount = df[df["type"] == "Expense"]["amount"].sum()
+
     total_income_amount   = summary["Total Income"].sum()
 
-    # net is income minus all expenses
-    net       = total_income_amount - total_expenses_amount
-    net_color = "green" if net >= 0 else "red"
-    net_str   = f"+${net:.2f}" if net >= 0 else f"-${abs(net):.2f}"
-
     table = Table(
-        title="[bold black]Savings by Category[/bold black]",
+        title="[black]Savings by Category[/black]",
         box=box.ROUNDED,
         show_footer=True,
-        header_style="bold black"
+        header_style="black"
     )
 
     table.add_column("Category",     style="black", no_wrap=True)
     table.add_column(
         "Total Income",
-        style="green",   # income is always green
+        style="black",   # income is always green
         justify="right",
-        footer=f"[bold green]${total_income_amount:.2f}[/bold green]",
-        footer_style="bold green"
+        footer=f"[black]${total_income_amount:.2f}[/black]",
+        footer_style="black"
     )
 
     # iterrows() loops through the DataFrame one row at a time
@@ -452,7 +447,7 @@ def report_savings_by_category():
     for _, row in summary.iterrows():
         table.add_row(
             str(row["category"]),
-            f"${row['Total Income']:.2f}"
+            f"[green]${row['Total Income']:.2f}[/green]"
         )
 
     console.print(table)
@@ -489,19 +484,19 @@ def report_expenses_by_category():
     total = summary["amount"].sum()  # grand total across all categories
 
     table = Table(
-        title="[bold black]Expenses by Category[/bold black]",
+        title="[black]Expenses by Category[/black]",
         box=box.ROUNDED,
         show_footer=True,
-        header_style="bold black"
+        header_style="black"
     )
 
     table.add_column("Category",    style="black", no_wrap=True)
     table.add_column(
         "Total Spent",
-        style="red",     # expenses are always red
-        justify="right",
-        footer=f"[bold red]${total:.2f}[/bold red]",
-        footer_style="bold red"
+        style="black",     # expenses are always red
+        justify="black",
+        footer=f"[black]${total:.2f}[/black]",
+        footer_style="black"
     )
 
     # iterrows() loops through the DataFrame one row at a time
@@ -533,7 +528,7 @@ def report_summary_by_period():
         "[black]4.[/black] Yearly\n"
         "\n"
         "[black]0.[/black] Cancel",
-        title="[bold black]Select Time Period[/bold black]",
+        title="[black]Select Time Period[/black]",
         border_style="black",
         box=box.ROUNDED
     ))
@@ -604,23 +599,23 @@ def report_summary_by_period():
     total_net_str   = f"+${total_net:.2f}" if total_net >= 0 else f"-${abs(total_net):.2f}"
 
     table = Table(
-        title=f"[bold black]{period_label} Summary[/bold black]",
+        title=f"[black]{period_label} Summary[/black]",
         box=box.ROUNDED,
         show_footer=True,
-        header_style="bold black"
+        header_style="black"
     )
 
     table.add_column(
         period_label,         # column header changes based on selected period
         style="black",
         no_wrap=True,
-        footer="[bold black]TOTAL[/bold black]"
+        footer="[black]TOTAL[/black]"
     )
     table.add_column(
         "Income",
         style="green",        # income is always green
         justify="right",
-        footer=f"[bold green]${total_income:.2f}[/bold green]"
+        footer=f"[dark_green]${total_income:.2f}[/dark_green]"
     )
     table.add_column(
         "Expenses",
@@ -631,14 +626,14 @@ def report_summary_by_period():
     table.add_column(
         "Net Savings",
         justify="right",
-        footer=f"[bold {total_net_color}]{total_net_str}[/bold {total_net_color}]"
+        footer=f"[dark {total_net_color}]{total_net_str}[/dark {total_net_color}]"
     )
 
     for _, row in summary.iterrows():
         net = row["Net Savings"]
 
         # pick color per row based on whether that period was positive or negative
-        net_color = "green" if net >= 0 else "red"
+        net_color = "dark green" if net >= 0 else "red"
         net_str   = f"+${net:.2f}" if net >= 0 else f"-${abs(net):.2f}"
 
         table.add_row(
@@ -667,7 +662,7 @@ def reports_menu():
             "[black]3.[/black] Summary by Period\n"
             "\n"
             "[black]0.[/black] Back to Main Menu",
-            title="[bold black]Reports Menu[/bold black]",
+            title="[black]Reports Menu[/black]",
             border_style="black",
             box=box.ROUNDED
         ))
@@ -676,10 +671,13 @@ def reports_menu():
 
         if choice == "1":
             report_savings_by_category()
+            input("\nPress Enter to return to Reports Menu...")
         elif choice == "2":
             report_expenses_by_category()
+            input("\nPress Enter to return to Reports Menu...")
         elif choice == "3":
             report_summary_by_period()
+            input("\nPress Enter to return to Reports Menu...")
         elif choice == "0":
             return  # returning from this function drops back to the main menu loop
         else:
@@ -708,7 +706,7 @@ def main():
                 "[black]5.[/black] Reports\n"
                 "\n"
                 "[black]6.[/black] Quit",
-                title="[bold black]Personal Finance Tracker[/bold black]",
+                title="[black]Personal Finance Tracker[/black]",
                 border_style="black",
                 box=box.ROUNDED
             ))
@@ -730,7 +728,7 @@ def main():
                 input("\nPress Enter to return to Main Menu...")  # returns to main menu after calculating totals
             elif choice == "5":
                 reports_menu()
-                input("\nPress Enter to return to Main Menu...")  # returns to main menu after viewing reports
+                #input("\nPress Enter to return to Main Menu...")  # returns to main menu after viewing reports
             elif choice == "6":
                 # Panel for the goodbye message so it stands out
                 console.print(Panel(
