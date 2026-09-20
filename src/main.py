@@ -718,14 +718,19 @@ def main():
             # route to the right function based on what they picked
             if choice == "1":
                 add_transaction()
+                input("\nPress Enter to return to Main Menu...")  # returns to main menu after adding a transaction
             elif choice == "2":
                 view_transactions()
+                input("\nPress Enter to return to Main Menu...")  # returns to main menu after viewing transactions
             elif choice == "3":
                 delete_transaction()
+                input("\nPress Enter to return to Main Menu...")  # returns to main menu after deleting a transaction
             elif choice == "4":
                 calculate_totals()
+                input("\nPress Enter to return to Main Menu...")  # returns to main menu after calculating totals
             elif choice == "5":
                 reports_menu()
+                input("\nPress Enter to return to Main Menu...")  # returns to main menu after viewing reports
             elif choice == "6":
                 # Panel for the goodbye message so it stands out
                 console.print(Panel(
