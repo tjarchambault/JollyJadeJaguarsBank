@@ -615,13 +615,13 @@ def report_summary_by_period():
         "Income",
         style="green",        # income is always green
         justify="right",
-        footer=f"[dark_green]${total_income:.2f}[/dark_green]"
+        footer=f"[black]${total_income:.2f}[/black]"
     )
     table.add_column(
         "Expenses",
         style="red",          # expenses are always red
         justify="right",
-        footer=f"[bold red]${total_expense:.2f}[/bold red]"
+        footer=f"[black]${total_expense:.2f}[/black]"
     )
     table.add_column(
         "Net Savings",
