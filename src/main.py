@@ -272,7 +272,7 @@ def add_transaction():
             a_input = input("Enter amount ($) (0 to Cancel): ").strip()
             if a_input == "0":
                 return
-            amount = float(a_input)
+            amount = round(float(a_input),2)
             if amount > 0:
                 break
             console.print("[red]Amount must be greater than zero.[/red]")
@@ -322,13 +322,10 @@ def add_transaction():
 def delete_transaction():
     """Removes a record from the database by ID."""
     df = load_transactions()
-
     if df.empty:
         console.print("\n[black]No records to delete.[/black]")
         return
-
     print_table(df)  # show the table so the user can see the IDs
-
     while True:
         t_id_input = input("\nEnter Transaction ID to delete (0 to Cancel): ").strip()
         if t_id_input == "0":
@@ -350,18 +347,21 @@ def delete_transaction():
         return
 
     # ask for confirmation so they dont delete something by accident
-    confirm = input(
-        f"Are you sure you want to delete transaction #{t_id}? (Y/N): "
-    ).strip().lower()
-
-    if confirm == "y":
-        if delete_transaction_by_id(t_id):
-            console.print("\n[green]Transaction deleted successfully.[/green]")
+    while True:                                                          # ← added loop
+        confirm = input(
+            f"Are you sure you want to delete transaction #{t_id}? (Y/N): "
+        ).strip().lower()
+        if confirm == "y":
+            if delete_transaction_by_id(t_id):
+                console.print("\n[green]Transaction deleted successfully.[/green]")
+            else:
+                console.print("\n[red]Transaction could not be deleted.[/red]")
+            break                                                        # ← exit after action
+        elif confirm == "n":
+            console.print("\n[black]Deletion cancelled.[/black]")
+            break                                                        # ← exit after action
         else:
-            console.print("\n[red]Transaction could not be deleted.[/red]")
-    else:
-        console.print("\n[black]Deletion cancelled.[/black]")
-
+            console.print("[red]Invalid input. Please enter Y or N.[/red]")  # ← reprompt
 
 def calculate_totals():
     """Loads data, calculates totals, and prints the financial summary."""
@@ -730,16 +730,22 @@ def main():
                 reports_menu()
                 #input("\nPress Enter to return to Main Menu...")  # returns to main menu after viewing reports
             elif choice == "6":
-                # Panel for the goodbye message so it stands out
-                console.print(Panel(
-                    "[black]Thank you for using Personal Finance Tracker.[/black]",
-                    border_style="black",
-                    box=box.ROUNDED
-                ))
-                sys.exit(0)
-            else:
-                console.print("[red]Invalid choice. Please select a number from 1 to 6.[/red]")
-
+                # ask for confirmation before quitting
+                while True:                                                              # ← added loop
+                    confirm = input("Are you sure you want to quit? (Y/N): ").strip().lower()
+                    if confirm == "y":
+                        console.print(Panel(
+                            "[black]Thank you for using Personal Finance Tracker.[/black]",
+                            border_style="black",
+                            box=box.ROUNDED
+                            ))
+                        sys.exit(0)
+                    elif confirm == "n":
+                        console.print("\n[black]Returning to Main Menu...[/black]")
+                        break                                                            # ← back to main menu
+                    else:
+                        console.print("[red]Invalid input. Please enter Y or N.[/red]") # ← reprompt
+            
         # this happens if the user hits Ctrl+C or Ctrl+D
         except (KeyboardInterrupt, EOFError):
             console.print("\n[black]Action cancelled. Returning to main menu...[/black]")
