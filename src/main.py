@@ -2,37 +2,42 @@
 # Purpose: Allow the user to add/view/delete financial transactions.
 # Inputs:  Income/Expense, category, amount, date.
 # Process: The user is guided step by step on entering a transaction. Functions serve
-#          as building blocks to acheive a final output
+#          as building blocks to achieve a final output.
 # Outputs: A viewable table with all transactions, total savings/expenses, net income.
 # Honor Code: On my honor, as an Aggie, I have neither given nor received unauthorized aid
-#             on this academic work. 
+#             on this academic work.
 #           The Aggie Code of Honor functions as a symbol to all Aggies, promoting understanding
 #           and loyalty to truth and confidence in each other.
 
-# these are the tools/libraries I need to import so I can use them
-import sys  # lets me quit the program with sys.exit
-import pandas as pd  # pandas is for working with tables of data (the DataFrame thing)
-import sqlite3  # this is the database, it comes built into python which is cool
-from datetime import datetime  # so I can get today's date and check date formats
+import sys
+import sqlite3
+import pandas as pd
+from datetime import datetime
+from rich.console import Console  # main object that handles all rich printing
+from rich.table import Table      # Table builds the formatted table structure
+from rich.panel import Panel      # Panel puts a bordered box around content
+from rich import box              # box has all the different border styles
 
-# File setup
-DB_FILE = "transactions.db"  # this is the name of my database file, it saves here
+# create one Console object and reuse it everywhere in this file
+console = Console(force_terminal=True)
 
-# Fixed Categories
-# making lists of the categories so the user can pick from them later
-income_categories = ["Salary", "Bonus", "Freelance", "Investment", "Other"]
+# =====================================================
+# CONSTANTS
+# =====================================================
+DB_FILE = "transactions.db"  # name of the database file, saves in the same folder
+
+income_categories  = ["Salary", "Bonus", "Freelance", "Investment", "Other"]
 expense_categories = ["Food", "Rent", "Utilities", "Entertainment", "Transportation",
                       "Healthcare", "Insurance", "Other"]
 
 # =====================================================
-# FILE INITIALIZATION & HELPERS
+# DATABASE FUNCTIONS
 # =====================================================
 def init_db():
     """Ensures SQLite database exists with proper schema."""
-    # this makes the database table if it doesn't exist yet
-    with sqlite3.connect(DB_FILE) as conn:  # connect to the database (the "with" auto closes it)
-        cursor = conn.cursor()  # the cursor is what actually runs my sql commands
-        # this big string is SQL, it makes a table with all my columns
+    # creates the transactions table if it doesnt exist yet
+    with sqlite3.connect(DB_FILE) as conn:
+        cursor = conn.cursor()
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS transactions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,58 +48,57 @@ def init_db():
                 type TEXT NOT NULL
             )
         ''')
-        conn.commit()  # commit means actually save the changes
+        conn.commit()  # commit saves the changes to disk
 
 
 def load_transactions():
     """Reads data from SQLite into a pandas DataFrame."""
-    init_db()  # make sure the table exists first before I try to read it
-    try:  # try in case something goes wrong so it doesn't crash
+    init_db()  # make sure the table exists before we try to read it
+    try:
         with sqlite3.connect(DB_FILE) as conn:
-            # pandas can read straight from sql which is way easier than looping
-            df = pd.read_sql_query("""SELECT id, date, description, category, amount,
-            type
-            FROM transactions ORDER BY date desc""", conn)  # order by date newest first
-            # Ensure types align for Pandas formatting
-            if not df.empty:  # only do this if there's actually data
-                # make sure amount is a number, if it's broken turn it into 0.0
+            # pandas can read straight from SQL which is easier than looping
+            df = pd.read_sql_query("""
+                SELECT id, date, description, category, amount, type
+                FROM transactions
+                ORDER BY date DESC
+            """, conn)
+            if not df.empty:  # only clean up types if there is actually data
+                # make sure amount is a number, coerce turns bad values into 0.0
                 df["amount"] = pd.to_numeric(df["amount"], errors="coerce").fillna(0.0)
-                # make the id a whole number (int) not a decimal
+                # make id a whole number instead of a decimal
                 df["id"] = pd.to_numeric(df["id"], errors="coerce").fillna(0).astype(int)
-        return df  # give back the table of data
-    except Exception as e:  # if anything broke, catch it here
-        print(f"Error loading database: {e}")  # show the error so I know what happened
-        # give back an empty table with the right columns so nothing else breaks
+        return df
+    except Exception as e:
+        print(f"Error loading database: {e}")
+        # return an empty DataFrame with the right columns so nothing else breaks
         return pd.DataFrame(columns=["id", "date", "description", "category", "amount", "type"])
 
 
 def save_transaction(date, description, category, amount, t_type):
     """Insert a single transaction into the database. Returns True on success."""
-    # this function actually saves a new transaction into the database
     try:
         with sqlite3.connect(DB_FILE) as conn:
             cursor = conn.cursor()
-            # the ? marks are placeholders, python fills them in safely (stops hacking)
+            # the ? marks are placeholders, Python fills them in safely
             cursor.execute('''
                 INSERT INTO transactions (date, description, category, amount, type)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (date, description, category, amount, t_type))  # these fill in the ?
-            conn.commit()  # save it
-        return True  # True means it worked
+            ''', (date, description, category, amount, t_type))
+            conn.commit()
+        return True   # True means it worked
     except Exception as e:
         print(f"Error saving transaction: {e}")
-        return False  # False means it didn't work
+        return False  # False means it failed
 
 
 def transaction_exists(t_id):
     """Returns True if a transaction with the given ID exists."""
-    # checks if a transaction is really in the database before I try to delete it
     try:
         with sqlite3.connect(DB_FILE) as conn:
             cursor = conn.cursor()
-            # SELECT 1 just checks if a row is there, don't need the actual data
+            # SELECT 1 just checks if a row is there, we dont need the actual data
             cursor.execute("SELECT 1 FROM transactions WHERE id = ?", (t_id,))
-            # fetchone gets one row, if it's None then nothing was found
+            # fetchone returns None if nothing was found
             return cursor.fetchone() is not None
     except Exception as e:
         print(f"Error checking transaction: {e}")
@@ -103,58 +107,31 @@ def transaction_exists(t_id):
 
 def delete_transaction_by_id(t_id):
     """Delete a transaction by ID. Returns True on success."""
-    # this deletes one transaction using its id number
     try:
         with sqlite3.connect(DB_FILE) as conn:
             cursor = conn.cursor()
-            # DELETE removes the row where the id matches
             cursor.execute("DELETE FROM transactions WHERE id = ?", (t_id,))
-            conn.commit()  # save the deletion
+            conn.commit()
         return True
     except Exception as e:
         print(f"Error deleting transaction: {e}")
         return False
 
 
-def print_table(df):
-    """Prints a view of transactions."""
-    # this prints out the transactions in a nice looking table
-    if df.empty:  # if there's no data just say so and stop
-        print("\nNo records found.")
-        return
-    df_sorted = df.sort_values(by="date", ascending=False)  # sort newest first
-    print("\n" + "=" * 90)  # "=" * 90 makes a line of 90 equal signs, looks like a border
-    # the <5 and <10 stuff lines up the columns so they're even (left aligned)
-    print(f"{'ID':<5} | {'Date':<10} | {'Type':<8} | {'Category':<15} | {'Description':<25} | {'Amount':<10}")
-    print("-" * 90)  # a line of dashes under the headers
-    for _, row in df_sorted.iterrows():  # loop through every row one at a time
-        # if the description is empty (NaN) just put N/A instead
-        desc = str(row['description']) if pd.notna(row['description']) else "N/A"
-        print(
-            f"{int(row['id']):<5} | "
-            f"{str(row['date']):<10} | "
-            f"{str(row['type']):<8} | "
-            f"{str(row['category']):<15} | "
-            f"{desc[:25]:<25} | "  # [:25] cuts off long descriptions at 25 letters
-            f"${row['amount']:<9.2f}"  # .2f means show 2 decimal places like money
-        )
-    print("=" * 90)  # bottom border
-
-
 # =====================================================
-# CALCULATION HELPERS (split out so they're reusable + testable)
+# CALCULATION FUNCTIONS
 # =====================================================
 def total_income(df):
     """Sum of all income amounts."""
-    # only add up the rows where type is Income
-    if df.empty:  # if no data, just return 0 so nothing crashes
+    # filter to income rows only then sum the amount column
+    if df.empty:
         return 0.0
     return df[df["type"] == "Income"]["amount"].sum()
 
 
 def total_expenses(df):
     """Sum of all expense amounts."""
-    # only add up the rows where type is Expense
+    # filter to expense rows only then sum the amount column
     if df.empty:
         return 0.0
     return df[df["type"] == "Expense"]["amount"].sum()
@@ -162,67 +139,132 @@ def total_expenses(df):
 
 def calculate_net_savings(df):
     """Income minus expenses."""
-    # savings is just money in minus money out
+    # net savings is simply money in minus money out
     return total_income(df) - total_expenses(df)
 
 
 # =====================================================
-# CORE FEATURES
+# DISPLAY FUNCTIONS
+# =====================================================
+def print_table(df):
+    """Prints a formatted view of transactions."""
+    if df.empty:
+        console.print("\n[black]No records found.[/black]")
+        return
+
+    # sort newest first so the most recent transactions are at the top
+    df_sorted = df.sort_values(by="date", ascending=False)
+
+    table = Table(
+        title="[bold black]Transactions[/bold black]",
+        box=box.ROUNDED,
+        header_style="bold black"
+    )
+
+    # each column gets a style, no_wrap prevents values breaking onto a new line
+    table.add_column("ID",          style="black", no_wrap=True, justify="left")
+    table.add_column("Date",        style="black", no_wrap=True)
+    table.add_column("Type",        no_wrap=True)   # colored per row below
+    table.add_column("Category",    style="black", no_wrap=True)
+    table.add_column("Description", style="black", no_wrap=True)
+    table.add_column("Amount",      no_wrap=True, justify="right")  # colored per row
+
+    for _, row in df_sorted.iterrows():
+        # if the description is empty put N/A so the cell is never blank
+        desc = str(row["description"]) if pd.notna(row["description"]) else "N/A"
+
+        # color the type and amount based on whether it is income or expense
+        if row["type"] == "Income":
+            type_str   = "[green]Income[/green]"
+            amount_str = f"[green]${row['amount']:.2f}[/green]"
+        else:
+            type_str   = "[red]Expense[/red]"
+            amount_str = f"[red]${row['amount']:.2f}[/red]"
+
+        table.add_row(
+            str(int(row["id"])),
+            str(row["date"]),
+            type_str,
+            str(row["category"]),
+            desc[:25],      # cut long descriptions off at 25 characters
+            amount_str
+        )
+
+    console.print(table)
+
+
+# =====================================================
+# TRANSACTION FUNCTIONS
 # =====================================================
 def view_transactions():
     """Lists all transactions."""
-    # shows all the transactions to the user
-    print("\n--- All Transactions ---")
-    df = load_transactions()  # get the data from the database
-    print_table(df)  # print it out nicely
+    df = load_transactions()  # get all transactions from the database
+    print_table(df)           # pass the DataFrame to print_table to display
 
 
 def add_transaction():
-    """Prompts and adds new entry to database."""
-    # this asks the user a bunch of questions to make a new transaction
-    print("\n--- Add New Transaction ---")
 
     # 1. Type
-    while True:  # keep asking until they pick something valid
-        t_choice = input("Select type (1: Income, 2: Expense, 0: Cancel): ").strip()  # strip removes extra spaces
+    while True:
+        console.print(Panel(
+            "[black]1.[/black] Income\n"
+            "\n"
+            "[black]2.[/black] Expense\n"
+            "\n"
+            "[black]0.[/black] Cancel",
+            title="[bold black]Select Transaction Type[/bold black]",
+            border_style="black",
+            box=box.ROUNDED
+        ))
+
+        t_choice = input("\nEnter selection (1, 2, or 0): ").strip()
         if t_choice == "0":
-            return  # Returns to main menu
+            return
         if t_choice == "1":
-            t_type = "Income"
-            categories = income_categories  # use the income list
-            break  # break stops the while loop
-        elif t_choice == "2":
-            t_type = "Expense"
-            categories = expense_categories  # use the expense list
+            t_type     = "Income"
+            categories = income_categories
             break
-        print("Invalid selection. Choose 1, 2, or 0.")  # only shows if they typed wrong
+        elif t_choice == "2":
+            t_type     = "Expense"
+            categories = expense_categories
+            break
+        console.print("[black]Invalid selection. Choose 1, 2, or 0.[/black]")
 
     # 2. Category
-    print(f"\nSelect {t_type} Category:")
-    # enumerate gives me a number AND the item, starting at 1 so it looks nice
+    cat_table = Table(box=box.SIMPLE, show_header=False)
+    cat_table.add_column("Num",      style="black", justify="right")
+    cat_table.add_column("Category", style="green" if t_type == "Income" else "red")
+
     for idx, cat in enumerate(categories, start=1):
-        print(f"{idx}. {cat}")
+        cat_table.add_row(str(idx), cat)
+
+    console.print(Panel(
+        cat_table,
+        title=f"[bold black]Select {t_type} Category[/bold black]",
+        border_style="green" if t_type == "Income" else "red",
+        box=box.ROUNDED
+    ))
 
     while True:
-        try:  # try because they might type letters instead of a number
+        try:
             c_input = input("Select category number (0 to Cancel): ").strip()
             if c_input == "0":
                 return
-            choice = int(c_input)  # turn what they typed into a number
-            # check the number is actually one of the choices in the list
+            choice = int(c_input)
             if 1 <= choice <= len(categories):
-                category = categories[choice - 1]  # minus 1 because lists start at 0
+                category = categories[choice - 1]
                 break
-            print(f"Please select a number between 1 and {len(categories)}.")
-        except ValueError:  # this happens if int() fails cause they typed a word
-            print("Invalid input. Please enter a number.")
+            console.print(f"[black]Please select a number between 1 and {len(categories)}.[/black]")
+        except ValueError:
+            console.print("[red]Invalid input. Please enter a number.[/red]")
 
     # 3. Description
+
     description = input("Enter description (0 to Cancel): ").strip()
     if description == "0":
         return
-    if not description:  # if they just hit enter and left it blank
-        description = "N/A"  # put N/A so it's not empty
+    if not description:
+        description = "N/A"
 
     # 4. Amount
     while True:
@@ -230,114 +272,450 @@ def add_transaction():
             a_input = input("Enter amount ($) (0 to Cancel): ").strip()
             if a_input == "0":
                 return
-            amount = float(a_input)  # float because money can have decimals
-            if amount > 0:  # can't have a negative or zero amount
+            amount = float(a_input)
+            if amount > 0:
                 break
-            print("Amount must be greater than zero.")
-        except ValueError:  # they typed something that's not a number
-            print("Please enter a valid numeric value.")
+            console.print("[red]Amount must be greater than zero.[/red]")
+        except ValueError:
+            console.print("[red]Please enter a valid numeric value.[/red]")
 
     # 5. Date
-    today_str = datetime.now().strftime("%Y-%m-%d")  # get today's date as text
-    date_input = input(f"Enter date (YYYY-MM-DD) [Default: {today_str}, 0 to Cancel]: ").strip()
-
-    if date_input == "0":
-        return
-    elif date_input:  # if they typed a date
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    while True:
+        date_input = input(
+            f"Enter date (YYYY-MM-DD) [press Enter for today ({today_str}), 0 to Cancel]: "
+        ).strip()
+        if date_input == "0":
+            return
+        if not date_input:
+            t_date = today_str
+            break
         try:
-            # strptime checks if the date is in the right format, errors if not
             datetime.strptime(date_input, "%Y-%m-%d")
             t_date = date_input
+            break
         except ValueError:
-            print("Invalid format. Defaulting to today's date.")
-            t_date = today_str  # if the date was bad just use today
-    else:  # they left it blank so use today
-        t_date = today_str
+            console.print("[red]Invalid format. Please use YYYY-MM-DD (example: 2025-01-15).[/red]")
 
-    # Save via data-layer helper
-    # call my save function and check if it returned True or False
+    # save to database and report success or failure
     if save_transaction(t_date, description, category, amount, t_type):
-        print("\nTransaction recorded successfully.")
+        console.print(Panel(
+            f"[green]Transaction recorded successfully.[/green]\n"
+            f"[black]Type     :[/black] "
+            f"[{'green' if t_type == 'Income' else 'red'}]{t_type}[/{'green' if t_type == 'Income' else 'red'}]\n"
+            f"[black]Category :[/black] [black]{category}[/black]\n"
+            f"[black]Desc     :[/black] [black]{description}[/black]\n"
+            f"[black]Amount   :[/black] [{'green' if t_type == 'Income' else 'red'}]${amount:.2f}[/{'green' if t_type == 'Income' else 'red'}]\n"
+            f"[black]Date     :[/black] [black]{t_date}[/black]",
+            title="[bold green]Saved[/bold green]",
+            border_style="green",
+            box=box.ROUNDED
+        ))
     else:
-        print("\nTransaction could not be saved.")
-
+        console.print(Panel(
+            "[red]Transaction could not be saved.[/red]",
+            title="[bold red]Error[/bold red]",
+            border_style="red",
+            box=box.ROUNDED
+        ))
 
 def delete_transaction():
     """Removes a record from the database by ID."""
-    # lets the user delete a transaction they don't want
     df = load_transactions()
-    if df.empty:  # can't delete anything if there's nothing there
-        print("\nNo records to delete.")
-        return
-    print_table(df)  # show them the table so they can see the ids
 
-    try:
+    if df.empty:
+        console.print("\n[black]No records to delete.[/black]")
+        return
+
+    print_table(df)  # show the table so the user can see the IDs
+
+    while True:
         t_id_input = input("\nEnter Transaction ID to delete (0 to Cancel): ").strip()
         if t_id_input == "0":
             return
-        t_id = int(t_id_input)  # turn the id into a number
-    except ValueError:
-        print("Invalid ID format. Returning to menu.")
-        return
+        try:
+            t_id = int(t_id_input)  # convert to int, fails if they type letters
+            if t_id > 0:            # IDs should always be positive
+                break
+            console.print("[black]Please enter a positive ID number.[/black]")
+        except ValueError:
+            console.print("[red]Invalid input. Please enter a numeric ID.[/red]")
 
-    # Check existence via data-layer helper
-    # make sure that id actually exists before asking to delete it
+    # check the ID actually exists before asking to confirm
     if not transaction_exists(t_id):
-        print("Transaction ID not found.")
+        console.print("[red]Transaction ID not found.[/red]")
+        retry = input("Would you like to delete a different transaction? (Y/N): ").strip().lower()
+        if retry == "y":
+            delete_transaction()  # restart the function from the top
         return
 
-    # ask them to confirm so they don't delete something by accident
-    confirm = input(f"Are you sure you want to delete transaction #{t_id}? (Y/N): ").strip().lower()  # lower makes Y or y both work
-    if confirm == 'y':
-        if delete_transaction_by_id(t_id):  # call the delete function
-            print("\nTransaction deleted successfully.")
+    # ask for confirmation so they dont delete something by accident
+    confirm = input(
+        f"Are you sure you want to delete transaction #{t_id}? (Y/N): "
+    ).strip().lower()
+
+    if confirm == "y":
+        if delete_transaction_by_id(t_id):
+            console.print("\n[green]Transaction deleted successfully.[/green]")
         else:
-            print("\nTransaction could not be deleted.")
+            console.print("\n[red]Transaction could not be deleted.[/red]")
     else:
-        print("\nDeletion cancelled.")
+        console.print("\n[black]Deletion cancelled.[/black]")
 
 
 def calculate_totals():
     """Loads data, calculates totals, and prints the financial summary."""
-    # this ties everything together: get data, do the math, then show it
-    df = load_transactions()  # grab all the data first
+    df = load_transactions()  # get all transactions from the database
 
-    # call my reusable calculation helpers instead of doing the math right here
-    income = total_income(df)
+    # call the reusable calculation helpers
+    income   = total_income(df)
     expenses = total_expenses(df)
-    net = calculate_net_savings(df)
+    net      = calculate_net_savings(df)
 
-    print("\n" + "=" * 40)  # top border line
-    print("FINANCIAL SUMMARY")
-    print("=" * 40)
-    # :.2f rounds to 2 decimals so it looks like proper money ($5.00 not $5.0)
-    print(f"Total Income   : ${income:.2f}")
-    print(f"Total Expenses : ${expenses:.2f}")
-    print(f"Net Savings    : ${net:.2f}")
-    print("=" * 40)  # bottom border line
+    # pick color for net savings based on whether it is positive or negative
+    # green means they saved money, red means they spent more than they earned
+    net_color = "green" if net >= 0 else "red"
+    net_str   = f"+${net:.2f}" if net >= 0 else f"-${abs(net):.2f}"
+
+    # Panel gives the summary its own clean bordered box
+    console.print(Panel(
+        f"[black]Total Income   :[/black]   [green]${income:.2f}[/green]\n"
+        f"[black]Total Expenses :[/black]   [red]${expenses:.2f}[/red]\n"
+        f"[black]Net Savings    :[/black]   [{net_color}]{net_str}[/{net_color}]",
+        title="[bold black]Financial Summary[/bold black]",
+        border_style="black",
+        box=box.ROUNDED
+    ))
+
+
+# =====================================================
+# REPORT FUNCTIONS
+# =====================================================
+def report_savings_by_category():
+    """Prints net savings per category based on income categories only."""
+
+    df = load_transactions()  # get all transactions as a DataFrame from the database
+
+    if df.empty:
+        console.print("\n[black]No transactions found.[/black]")
+        return
+
+    # filter to income rows only since savings come from income
+    # expense categories like Food or Rent are not relevant here
+    income = df[df["type"] == "Income"]
+
+    if income.empty:
+        console.print("\n[black]No income transactions found.[/black]")
+        return
+
+    # groupby category and sum the amounts within each group
+    # sort descending so the highest earning category is at the top
+    summary = (
+        income.groupby("category")["amount"]
+        .sum()
+        .reset_index()
+        .sort_values("amount", ascending=False)
+    )
+
+    # rename amount to Total Income so the column header makes sense
+    summary = summary.rename(columns={"amount": "Total Income"})
+
+    # pull total expenses as a single number to subtract from income
+    # we dont break expenses down by category here since savings is about
+    # how much income is left after ALL expenses are accounted for
+    total_expenses_amount = df[df["type"] == "Expense"]["amount"].sum()
+    total_income_amount   = summary["Total Income"].sum()
+
+    # net is income minus all expenses
+    net       = total_income_amount - total_expenses_amount
+    net_color = "green" if net >= 0 else "red"
+    net_str   = f"+${net:.2f}" if net >= 0 else f"-${abs(net):.2f}"
+
+    table = Table(
+        title="[bold black]Savings by Category[/bold black]",
+        box=box.ROUNDED,
+        show_footer=True,
+        header_style="bold black"
+    )
+
+    table.add_column("Category",     style="black", no_wrap=True)
+    table.add_column(
+        "Total Income",
+        style="green",   # income is always green
+        justify="right",
+        footer=f"[bold green]${total_income_amount:.2f}[/bold green]",
+        footer_style="bold green"
+    )
+
+    # iterrows() loops through the DataFrame one row at a time
+    # _ is a throwaway variable for the index since we dont need it
+    for _, row in summary.iterrows():
+        table.add_row(
+            str(row["category"]),
+            f"${row['Total Income']:.2f}"
+        )
+
+    console.print(table)
+
+
+def report_expenses_by_category():
+    """Prints a summary of total expenses grouped by category."""
+
+    df = load_transactions()  # get all transactions as a DataFrame from the database
+
+    if df.empty:
+        console.print("\n[black]No transactions found.[/black]")
+        return
+
+    # boolean filtering - creates a new DataFrame with only Expense rows
+    # Income rows are excluded since this report is expenses only
+    expenses = df[df["type"] == "Expense"]
+
+    if expenses.empty:
+        console.print("\n[black]No expense transactions found.[/black]")
+        return
+
+    # groupby splits the DataFrame into groups based on the category column
+    # .sum() adds up all the amounts within each group
+    # .reset_index() turns the grouped result back into a normal flat DataFrame
+    # .sort_values() puts the highest spending category at the top
+    summary = (
+        expenses.groupby("category")["amount"]
+        .sum()
+        .reset_index()
+        .sort_values("amount", ascending=False)
+    )
+
+    total = summary["amount"].sum()  # grand total across all categories
+
+    table = Table(
+        title="[bold black]Expenses by Category[/bold black]",
+        box=box.ROUNDED,
+        show_footer=True,
+        header_style="bold black"
+    )
+
+    table.add_column("Category",    style="black", no_wrap=True)
+    table.add_column(
+        "Total Spent",
+        style="red",     # expenses are always red
+        justify="right",
+        footer=f"[bold red]${total:.2f}[/bold red]",
+        footer_style="bold red"
+    )
+
+    # iterrows() loops through the DataFrame one row at a time
+    for _, row in summary.iterrows():
+        table.add_row(
+            str(row["category"]),
+            f"${row['amount']:.2f}"
+        )
+
+    console.print(table)
+
+def report_summary_by_period():
+    """Prints income, expenses, and net savings grouped by user selected time period."""
+
+    df = load_transactions()  # get all transactions as a DataFrame from the database
+
+    if df.empty:
+        console.print("\n[black]No transactions found.[/black]")
+        return
+
+    # show the period selection menu in a Panel so it matches the rest of the app
+    console.print(Panel(
+        "[black]1.[/black] Daily\n"
+        "\n"
+        "[black]2.[/black] Weekly\n"
+        "\n"
+        "[black]3.[/black] Monthly\n"
+        "\n"
+        "[black]4.[/black] Yearly\n"
+        "\n"
+        "[black]0.[/black] Cancel",
+        title="[bold black]Select Time Period[/bold black]",
+        border_style="black",
+        box=box.ROUNDED
+    ))
+
+    choice = input("\nEnter selection: ").strip()
+
+    # map the user choice to a pandas period string and a display label
+    # these period strings are what pandas uses in .dt.to_period()
+    # D = day, W = week, M = month, Y = year
+    period_map = {
+        "1": ("D", "Daily"),
+        "2": ("W", "Weekly"),
+        "3": ("M", "Monthly"),
+        "4": ("Y", "Yearly")
+    }
+
+    if choice == "0":
+        return
+
+    # check if they picked a valid option before doing anything else
+    if choice not in period_map:
+        console.print("[black]Invalid selection.[/black]")
+        return
+
+    # unpack the period string and label from the map
+    period_str, period_label = period_map[choice]
+
+    # pd.to_datetime converts date strings into datetime objects
+    # errors="coerce" turns bad dates into NaT instead of crashing
+    # .dt.to_period() groups by the chosen time period
+    df["period"] = pd.to_datetime(df["date"], errors="coerce").dt.to_period(period_str)
+
+    # if every single date failed to parse we have nothing to group by
+    if df["period"].isna().all():
+        console.print("\n[black]No valid dates found in records.[/black]")
+        return
+
+    # groupby groups by period AND type at the same time
+    # .unstack() pivots the type values into their own columns
+    # fill_value=0 fills missing period/type combos with 0 instead of NaN
+    summary = (
+        df.groupby(["period", "type"])["amount"]
+        .sum()
+        .unstack(fill_value=0)
+        .reset_index()
+    )
+
+    # unstack only creates columns for types that actually exist in the data
+    # if no income exists yet the Income column wont be there so we add it as 0
+    if "Income" not in summary.columns:
+        summary["Income"] = 0.0
+    if "Expense" not in summary.columns:
+        summary["Expense"] = 0.0
+
+    # vectorized math - pandas applies this across every row automatically
+    summary["Net Savings"] = summary["Income"] - summary["Expense"]
+
+    # sort oldest to newest so the report reads chronologically
+    summary = summary.sort_values("period")
+
+    # totals for the footer row
+    total_income  = summary["Income"].sum()
+    total_expense = summary["Expense"].sum()
+    total_net     = summary["Net Savings"].sum()
+
+    # pick footer color for net based on whether overall savings is positive
+    total_net_color = "green" if total_net >= 0 else "red"
+    total_net_str   = f"+${total_net:.2f}" if total_net >= 0 else f"-${abs(total_net):.2f}"
+
+    table = Table(
+        title=f"[bold black]{period_label} Summary[/bold black]",
+        box=box.ROUNDED,
+        show_footer=True,
+        header_style="bold black"
+    )
+
+    table.add_column(
+        period_label,         # column header changes based on selected period
+        style="black",
+        no_wrap=True,
+        footer="[bold black]TOTAL[/bold black]"
+    )
+    table.add_column(
+        "Income",
+        style="green",        # income is always green
+        justify="right",
+        footer=f"[bold green]${total_income:.2f}[/bold green]"
+    )
+    table.add_column(
+        "Expenses",
+        style="red",          # expenses are always red
+        justify="right",
+        footer=f"[bold red]${total_expense:.2f}[/bold red]"
+    )
+    table.add_column(
+        "Net Savings",
+        justify="right",
+        footer=f"[bold {total_net_color}]{total_net_str}[/bold {total_net_color}]"
+    )
+
+    for _, row in summary.iterrows():
+        net = row["Net Savings"]
+
+        # pick color per row based on whether that period was positive or negative
+        net_color = "green" if net >= 0 else "red"
+        net_str   = f"+${net:.2f}" if net >= 0 else f"-${abs(net):.2f}"
+
+        table.add_row(
+            str(row["period"]),
+            f"${row['Income']:.2f}",
+            f"${row['Expense']:.2f}",
+            f"[{net_color}]{net_str}[/{net_color}]"  # inline color per row
+        )
+
+    console.print(table)
+
+
+# =====================================================
+# REPORTS MENU
+# =====================================================
+def reports_menu():
+    """Sub-menu for selecting which report to run."""
+    # this runs in its own loop so the user can run multiple reports
+    # without going back to the main menu each time
+    while True:
+        console.print(Panel(
+            "[black]1.[/black] Savings by Category\n"
+            "\n"
+            "[black]2.[/black] Expenses by Category\n"
+            "\n"
+            "[black]3.[/black] Summary by Period\n"
+            "\n"
+            "[black]0.[/black] Back to Main Menu",
+            title="[bold black]Reports Menu[/bold black]",
+            border_style="black",
+            box=box.ROUNDED
+        ))
+
+        choice = input("\nEnter selection: ").strip()
+
+        if choice == "1":
+            report_savings_by_category()
+        elif choice == "2":
+            report_expenses_by_category()
+        elif choice == "3":
+            report_summary_by_period()
+        elif choice == "0":
+            return  # returning from this function drops back to the main menu loop
+        else:
+            console.print("[red]Invalid choice. Please select 1, 2, 3, or 0.[/red]")
 
 
 # =====================================================
 # MAIN LOOP
 # =====================================================
 def main():
-    """Main loop."""
-    # this is the main part that runs the whole program
-    init_db()  # set up the database right at the start just in case
-    while True:  # loop forever so the menu keeps coming back until they quit
-        try:  # try so a weird error doesn't crash the whole thing
-            # print out the menu every time so the user knows their options
-            print("\n" + "=" * 40)
-            print("        PERSONAL FINANCE TRACKER       ")
-            print("=" * 40)
-            print("1. Add Transaction")
-            print("2. View Transactions")
-            print("3. Delete Transaction")
-            print("4. Calculate Totals")
-            print("5. Quit")
-            choice = input("\nEnter selection (1-5): ").strip()  # ask what they want to do
+    """Main loop - displays menu and routes user to the right feature."""
+    init_db()  # set up the database right at the start just in case it doesnt exist
 
-            # check what number they picked and call the right function
+    while True:
+        try:
+            # Panel wraps the entire menu in a clean bordered box
+            console.print(Panel(
+                "[black]1.[/black] Add Transaction\n"
+                "\n"
+                "[black]2.[/black] View Transactions\n"
+                "\n"
+                "[black]3.[/black] Delete Transaction\n"
+                "\n"
+                "[black]4.[/black] Calculate Totals\n"
+                "\n"
+                "[black]5.[/black] Reports\n"
+                "\n"
+                "[black]6.[/black] Quit",
+                title="[bold black]Personal Finance Tracker[/bold black]",
+                border_style="black",
+                box=box.ROUNDED
+            ))
+
+            choice = input("\nEnter selection (1-6): ").strip()
+
+            # route to the right function based on what they picked
             if choice == "1":
                 add_transaction()
             elif choice == "2":
@@ -347,24 +725,29 @@ def main():
             elif choice == "4":
                 calculate_totals()
             elif choice == "5":
-                print("\nThank you for using Simple Finance Tracker.")
-                sys.exit(0)  # this actually quits the program
+                reports_menu()
+            elif choice == "6":
+                # Panel for the goodbye message so it stands out
+                console.print(Panel(
+                    "[black]Thank you for using Personal Finance Tracker.[/black]",
+                    border_style="black",
+                    box=box.ROUNDED
+                ))
+                sys.exit(0)
             else:
-                print("Invalid choice. Please select a number from 1 to 5.")  # they typed something wrong
+                console.print("[red]Invalid choice. Please select a number from 1 to 6.[/red]")
 
-        # Catches normal cancellation keystrokes
-        # this happens if they hit Ctrl+C or Ctrl+D to cancel
+        # this happens if the user hits Ctrl+C or Ctrl+D
         except (KeyboardInterrupt, EOFError):
-            print("\n\nAction cancelled. Returning to main menu...")
-            continue  # continue goes back to the top of the while loop
-        # Hard catch for weird numpad/terminal escape sequences
-        # this catches any other weird error so the program keeps running
-        except Exception:
-            print("\n\nInvalid key detected. Returning to main menu...")
+            console.print("\n[black]Action cancelled. Returning to main menu...[/black]")
+            continue
+
+        # catches any unexpected error so the program keeps running
+        except Exception as e:
+            console.print(f"\n[red]Unexpected error: {e}[/red]")
             continue
 
 
-# this checks if the file is being run directly (not imported)
-# if it is, then start the program by calling main()
-if __name__ == "__main__":  # note: __name__ has double underscores on each side
+# only runs if this file is executed directly, not if it is imported
+if __name__ == "__main__":
     main()
